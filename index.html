@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Study Timer</title>
+  <meta name="description" content="Study timer aesthetic dengan Pomodoro, music player, suara ambient, dan background yang bisa diganti.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%2316141f'/%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%23ffb4a2' stroke-width='3' stroke-dasharray='47 63' transform='rotate(-90 16 16)'/%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0d1a">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Inter:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;500&family=Playfair+Display:wght@400;500&family=Press+Start+2P&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Lapisan background -->
+  <div class="bg-stack" aria-hidden="true">
+    <div id="bg-layer" class="bg-layer"></div>
+    <video id="bg-video" class="bg-layer" muted loop playsinline hidden></video>
+    <div id="bg-dim" class="bg-dim"></div>
+    <canvas id="particles" class="particles"></canvas>
+  </div>
+
+  <header class="topbar ui">
+    <div class="brand">study<span>.</span>timer</div>
+    <div class="modes" role="tablist" aria-label="Mode timer">
+      <button role="tab" data-mode="pomodoro">Pomodoro</button>
+      <button role="tab" data-mode="countdown">Countdown</button>
+      <button role="tab" data-mode="stopwatch">Stopwatch</button>
+    </div>
+    <button class="today" id="today" title="Lihat statistik">
+      <span id="today-text"></span>
+      <span class="streak" id="streak" title="Streak: hari berturut-turut ada sesi fokus" hidden><i data-icon="flame"></i><span id="streak-n"></span></span>
+    </button>
+  </header>
+
+  <main class="stage">
+    <div class="phases ui" id="phases">
+      <button data-phase="focus">Fokus</button>
+      <button data-phase="short">Istirahat pendek</button>
+      <button data-phase="long">Istirahat panjang</button>
+    </div>
+
+    <div class="countdown-setup ui" id="countdown-setup">
+      <div class="chips" id="cd-chips">
+        <button data-min="5">5</button>
+        <button data-min="10">10</button>
+        <button data-min="15">15</button>
+        <button data-min="30">30</button>
+        <button data-min="45">45</button>
+        <button data-min="60">60</button>
+      </div>
+      <label class="cd-custom">
+        <input type="number" min="1" max="600" data-setting="countdownMin" aria-label="Menit countdown"> menit
+      </label>
+    </div>
+
+    <div id="clock" class="clock" role="timer" aria-live="off"></div>
+
+    <div class="dots ui" id="dots"></div>
+
+    <button class="task-chip ui" id="task-chip" title="Tugas yang sedang dikerjakan">
+      <i data-icon="target"></i><span id="task-chip-text"></span>
+    </button>
+
+    <div class="controls ui">
+      <button class="ctl" id="btn-reset" title="Reset (R)" aria-label="Reset"><i data-icon="reset"></i></button>
+      <button class="ctl ctl--main" id="btn-start"><i data-icon="play" id="start-icon"></i><span id="start-label">Mulai</span></button>
+      <button class="ctl" id="btn-skip" title="Lewati sesi (S)" aria-label="Lewati sesi"><i data-icon="skip"></i></button>
+    </div>
+  </main>
+
+  <nav class="dock ui" aria-label="Menu">
+    <button class="dock-btn" data-panel="bg" title="Background" aria-label="Background"><i data-icon="image"></i></button>
+    <button class="dock-btn" data-panel="clockstyle" title="Gaya jam" aria-label="Gaya jam"><i data-icon="clock"></i></button>
+    <button class="dock-btn" data-panel="music" title="Musik" aria-label="Musik"><i data-icon="music"></i><span class="live-dot" id="music-dot"></span></button>
+    <button class="dock-btn" data-panel="ambient" title="Suara ambient" aria-label="Suara ambient"><i data-icon="rain"></i><span class="live-dot" id="ambient-dot"></span></button>
+    <button class="dock-btn" data-panel="tasks" title="Tugas" aria-label="Tugas"><i data-icon="tasks"></i></button>
+    <button class="dock-btn" data-panel="stats" title="Statistik" aria-label="Statistik"><i data-icon="chart"></i></button>
+    <button class="dock-btn" data-panel="settings" title="Pengaturan" aria-label="Pengaturan"><i data-icon="sliders"></i></button>
+    <span class="dock-sep"></span>
+    <button class="dock-btn" id="btn-pip" title="Jendela mini (P)" aria-label="Jendela mini"><i data-icon="pip"></i></button>
+    <button class="dock-btn" id="btn-focus" title="Mode fokus (H)" aria-label="Mode fokus"><i data-icon="eyeoff"></i></button>
+    <button class="dock-btn" id="btn-fullscreen" title="Layar penuh (F)" aria-label="Layar penuh"><i data-icon="maximize"></i></button>
+  </nav>
+
+  <button class="focus-exit" id="focus-exit">Keluar mode fokus</button>
+
+  <!-- ============ Panel: Background ============ -->
+  <section class="panel" data-name="bg" aria-label="Background">
+    <header class="panel-head"><h2>Background</h2><button class="icon-btn panel-close" aria-label="Tutup"><i data-icon="x"></i></button></header>
+
+    <div class="bg-grid" id="bg-presets"></div>
+
+    <h3>Wallpaper</h3>
+    <div class="bg-grid bg-grid--photo" id="bg-wallpapers"></div>
+
+    <h3>Punya sendiri</h3>
+    <div class="row">
+      <label class="btn btn--ghost file-btn"><i data-icon="upload"></i> Upload gambar / video
+        <input type="file" id="bg-upload" accept="image/*,video/*" hidden>
+      </label>
+    </div>
+    <form class="row url-row" id="bg-url-form">
+      <input type="url" id="bg-url" placeholder="Tempel link gambar atau .mp4">
+      <button class="btn" type="submit">Pakai</button>
+    </form>
+
+    <h3>Tampilan</h3>
+    <label class="field">Gelapkan <input type="range" min="0" max="0.8" step="0.01" data-setting="dim"></label>
+    <label class="field">Blur <input type="range" min="0" max="20" step="1" data-setting="blur"></label>
+
+    <h3>Efek</h3>
+    <div class="seg" data-setting="particles">
+      <button data-value="none">Tidak ada</button>
+      <button data-value="rain">Hujan</button>
+      <button data-value="snow">Salju</button>
+      <button data-value="fireflies">Kunang-kunang</button>
+    </div>
+
+    <h3>Warna teks</h3>
+    <div class="seg" data-setting="ink">
+      <button data-value="auto">Otomatis</button>
+      <button data-value="light">Terang</button>
+      <button data-value="dark">Gelap</button>
+    </div>
+  </section>
+
+  <!-- ============ Panel: Gaya jam ============ -->
+  <section class="panel" data-name="clockstyle" aria-label="Gaya jam">
+    <header class="panel-head"><h2>Gaya jam</h2><button class="icon-btn panel-close" aria-label="Tutup"><i data-icon="x"></i></button></header>
+
+    <div class="style-grid" id="style-grid"></div>
+
+    <h3>Font</h3>
+    <div class="seg" data-setting="font">
+      <button data-value="sans" style="font-family:Inter">Sans</button>
+      <button data-value="serif" style="font-family:'Playfair Display'">Serif</button>
+      <button data-value="mono" style="font-family:'JetBrains Mono'">Mono</button>
+      <button data-value="hand" style="font-family:Caveat;font-size:1.15em">Tulisan</button>
+    </div>
+
+    <h3>Warna aksen</h3>
+    <div class="swatches" id="accent-swatches">
+      <label class="swatch swatch--custom" title="Warna lain"><input type="color" data-setting="accent" aria-label="Pilih warna aksen"></label>
+    </div>
+
+    <h3>Warna angka</h3>
+    <div class="swatches" id="digit-swatches">
+      <label class="swatch swatch--custom" title="Warna lain"><input type="color" data-setting="digitColor" aria-label="Pilih warna angka"></label>
+    </div>
+
+    <h3>Ukuran</h3>
+    <label class="field">Skala <input type="range" min="0.6" max="1.4" step="0.05" data-setting="clockScale"></label>
+  </section>
+
+  <!-- ============ Panel: Musik ============ -->
+  <section class="panel" data-name="music" aria-label="Musik">
+    <header class="panel-head"><h2>Musik</h2><button class="icon-btn panel-close" aria-label="Tutup"><i data-icon="x"></i></button></header>
+
+    <div class="seg" id="music-tabs">
+      <button data-value="youtube" class="active">YouTube</button>
+      <button data-value="local">File lokal</button>
+    </div>
+
+    <div class="music-pane" data-pane="youtube">
+      <p class="note" id="yt-file-note" hidden>YouTube tidak bisa diputar kalau halaman dibuka langsung dari file. Jalankan <b>start.bat</b>, lalu buka lewat <b>http://localhost:5500</b>.</p>
+      <div class="yt-presets" id="yt-presets"></div>
+      <form class="row url-row" id="yt-form">
+        <input type="text" id="yt-url" placeholder="Tempel link video / playlist YouTube">
+        <button class="btn" type="submit">Putar</button>
+      </form>
+      <div class="yt-frame"><div id="yt-player"></div><span class="yt-empty">Pilih stasiun atau tempel link</span></div>
+    </div>
+
+    <div class="music-pane" data-pane="local" hidden>
+      <label class="btn btn--ghost file-btn"><i data-icon="upload"></i> Pilih file musik
+        <input type="file" id="local-files" accept="audio/*" multiple hidden>
+      </label>
+      <p class="note">File hanya dipakai selama tab ini terbuka dan tidak diunggah ke mana pun.</p>
+      <ol class="tracklist" id="tracklist"></ol>
+      <div class="player-ctl">
+        <button class="icon-btn" id="lp-prev" aria-label="Sebelumnya"><i data-icon="prev"></i></button>
+        <button class="icon-btn icon-btn--main" id="lp-play" aria-label="Putar/jeda"><i data-icon="play"></i></button>
+        <button class="icon-btn" id="lp-next" aria-label="Berikutnya"><i data-icon="skip"></i></button>
+      </div>
+    </div>
+
+    <label class="field">Volume <input type="range" min="0" max="100" step="1" data-setting="musicVol"></label>
+  </section>
+
+  <!-- ============ Panel: Ambient ============ -->
+  <section class="panel" data-name="ambient" aria-label="Suara ambient">
+    <header class="panel-head"><h2>Suara ambient</h2><button class="icon-btn panel-close" aria-label="Tutup"><i data-icon="x"></i></button></header>
+    <p class="note">Nyalakan beberapa sekaligus dan atur volumenya masing-masing.</p>
+    <div class="amb-list" id="amb-list"></div>
+    <label class="field">Volume utama <input type="range" min="0" max="1" step="0.01" data-setting="ambientMaster"></label>
+    <button class="btn btn--ghost" id="amb-off">Matikan semua</button>
+  </section>
+
+  <!-- ============ Panel: Tugas ============ -->
+  <section class="panel" data-name="tasks" aria-label="Tugas">
+    <header class="panel-head"><h2>Tugas</h2><button class="icon-btn panel-close" aria-label="Tutup"><i data-icon="x"></i></button></header>
+    <form class="row url-row" id="task-form">
+      <input type="text" id="task-input" placeholder="Mau ngerjain apa? mis. Bab 3 Kalkulus" maxlength="80" autocomplete="off">
+      <button class="btn" type="submit">Tambah</button>
+    </form>
+    <p class="note">Pilih satu tugas. Setiap sesi fokus Pomodoro yang selesai akan tercatat ke tugas itu.</p>
+    <ul class="task-list" id="task-list"></ul>
+    <button class="btn btn--ghost" id="task-clear-done" hidden>Hapus tugas yang sudah selesai</button>
+  </section>
+
+  <!-- ============ Panel: Statistik ============ -->
+  <section class="panel" data-name="stats" aria-label="Statistik">
+    <header class="panel-head"><h2>Statistik</h2><button class="icon-btn panel-close" aria-label="Tutup"><i data-icon="x"></i></button></header>
+    <div class="stat-tiles" id="stat-tiles"></div>
+
+    <h3>Waktu fokus 7 hari terakhir</h3>
+    <div class="week-chart" id="week-chart"></div>
+
+    <h3>20 minggu terakhir</h3>
+    <div class="heatmap-wrap">
+      <div class="hm-days"><span>Sen</span><span></span><span>Rab</span><span></span><span>Jum</span><span></span><span>Min</span></div>
+      <div class="heatmap" id="heatmap"></div>
+    </div>
+    <div class="hm-legend">Sedikit <i class="hm-l0"></i><i class="hm-l1"></i><i class="hm-l2"></i><i class="hm-l3"></i><i class="hm-l4"></i> Banyak</div>
+    <p class="note">Yang dihitung hanya sesi fokus Pomodoro yang selesai sampai habis (bukan yang di-skip).</p>
+  </section>
+
+  <!-- ============ Panel: Pengaturan ============ -->
+  <section class="panel" data-name="settings" aria-label="Pengaturan">
+    <header class="panel-head"><h2>Pengaturan</h2><button class="icon-btn panel-close" aria-label="Tutup"><i data-icon="x"></i></button></header>
+
+    <h3>Durasi Pomodoro (menit)</h3>
+    <div class="num-grid">
+      <label>Fokus <input type="number" min="1" max="600" data-setting="focus"></label>
+      <label>Istirahat pendek <input type="number" min="1" max="600" data-setting="short"></label>
+      <label>Istirahat panjang <input type="number" min="1" max="600" data-setting="long"></label>
+      <label>Istirahat panjang tiap (sesi) <input type="number" min="1" max="12" data-setting="interval"></label>
+    </div>
+    <div class="presets-row" id="pomo-presets">
+      <button class="chip" data-preset="25,5,15">25 / 5</button>
+      <button class="chip" data-preset="50,10,20">50 / 10</button>
+      <button class="chip" data-preset="90,20,30">90 / 20</button>
+    </div>
+
+    <h3>Otomatis</h3>
+    <label class="switch"><input type="checkbox" data-setting="autoBreak"><span></span>Mulai istirahat otomatis</label>
+    <label class="switch"><input type="checkbox" data-setting="autoFocus"><span></span>Mulai fokus otomatis setelah istirahat</label>
+    <label class="switch"><input type="checkbox" data-setting="pauseMusicOnBreak"><span></span>Jeda musik saat istirahat</label>
+    <label class="switch"><input type="checkbox" data-setting="wakeLock"><span></span>Layar tetap menyala saat timer jalan</label>
+    <label class="switch"><input type="checkbox" data-setting="notify"><span></span>Notifikasi browser</label>
+
+    <h3>Alarm</h3>
+    <div class="row">
+      <select data-setting="alarm" id="alarm-select" aria-label="Bunyi alarm"></select>
+      <button class="btn btn--ghost" id="alarm-test">Tes</button>
+    </div>
+    <label class="field">Volume alarm <input type="range" min="0" max="1" step="0.01" data-setting="alarmVol"></label>
+
+    <h3>Aplikasi</h3>
+    <p class="note" id="install-note"></p>
+    <button class="btn" id="btn-install" hidden><i data-icon="download"></i> Install Study Timer</button>
+
+    <h3>Shortcut keyboard</h3>
+    <dl class="shortcuts">
+      <dt><kbd>Space</kbd></dt><dd>Mulai / jeda</dd>
+      <dt><kbd>R</kbd></dt><dd>Reset</dd>
+      <dt><kbd>S</kbd></dt><dd>Lewati sesi</dd>
+      <dt><kbd>H</kbd></dt><dd>Mode fokus</dd>
+      <dt><kbd>F</kbd></dt><dd>Layar penuh</dd>
+      <dt><kbd>P</kbd></dt><dd>Jendela mini mengambang</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Tutup panel</dd>
+    </dl>
+
+    <button class="btn btn--danger" id="reset-settings">Kembalikan pengaturan awal</button>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/util.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/clock.js"></script>
+  <script src="js/media.js"></script>
+  <script src="js/progress.js"></script>
+  <script src="js/pip.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
