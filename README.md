@@ -48,7 +48,7 @@ Yang dibutuhkan: browser **Chrome** atau **Edge**, dan **Python 3** (atau Node.j
 
 1. Download project ini: klik **Code → Download ZIP** lalu ekstrak, atau clone:
    ```bash
-   git clone https://github.com/MuhammadMirzaRalfie/Its-Studey-Time-.git
+   git clone https://github.com/MuhammadMirzaRalfie/Its-Study-Time.git
    ```
 2. Buka foldernya, lalu **double-click `start.bat`**.
 3. Browser otomatis terbuka di **http://localhost:5500**. Selesai!
@@ -58,7 +58,7 @@ Biarkan jendela hitam (server) tetap terbuka selama memakai Study Timer. Tutup j
 ### Mac / Linux
 
 ```bash
-cd Its-Studey-Time-
+cd Its-Study-Time
 python3 -m http.server 5500
 ```
 
