@@ -96,6 +96,7 @@ const MiniTimer = (() => {
     doc.getElementById('m-fill').style.width = `${state.fill * 100}%`;
     doc.getElementById('m-toggle').innerHTML = `${icon(state.running ? 'pause' : 'play')}<span>${state.startText}</span>`;
     doc.getElementById('m-skip').hidden = !state.canSkip;
+    doc.querySelector('.ctl').style.display = state.canControl === false ? 'none' : ''; // mode Jam
   }
 
   return {

@@ -96,11 +96,13 @@ function elapsedNow() {
 
 // Timer belum disentuh: aman untuk menerapkan durasi baru dari pengaturan.
 function isFresh() {
+  if (T.mode === 'clock') return true;
   if (T.running) return false;
   return T.mode === 'stopwatch' ? T.swElapsed === 0 : (T.remaining === T.duration || T.remaining === 0);
 }
 
 function resetTimer() {
+  if (T.mode === 'clock') return;
   T.running = false;
   // Hanya reset mode yang sedang tampil, jangan sentuh waktu mode lain.
   if (T.mode === 'stopwatch') T.swElapsed = 0;
@@ -111,7 +113,7 @@ function resetTimer() {
 }
 
 function startTimer() {
-  if (T.running) return;
+  if (T.running || T.mode === 'clock') return;
   AudioEngine.getCtx(); // buka kunci audio lewat interaksi user, supaya alarm nanti bisa bunyi
   if (T.mode === 'stopwatch') {
     T.swStart = Date.now() - T.swElapsed;
@@ -146,18 +148,20 @@ const toggleTimer = () => (T.running ? pauseTimer() : startTimer());
 
 // Kunci stash untuk tampilan sekarang: fase Pomodoro, atau 'countdown'.
 const stashKey = () => (T.mode === 'pomodoro' ? T.phase : T.mode);
+// Stopwatch dan Jam tidak punya sisa waktu untuk disimpan.
+const hasRemaining = () => T.mode === 'pomodoro' || T.mode === 'countdown';
 
 // Simpan posisi timer sebelum pindah tab. Timer yang masih "fresh" tidak disimpan,
 // supaya nanti ikut durasi terbaru dari pengaturan.
 function stashTime() {
-  if (T.mode === 'stopwatch') return;
+  if (!hasRemaining()) return;
   if (isFresh()) delete T.stash[stashKey()];
   else T.stash[stashKey()] = { duration: T.duration, remaining: T.remaining };
 }
 
 // Ambil lagi posisi timer untuk tab yang baru dibuka (atau durasi penuh kalau belum ada).
 function loadTime() {
-  if (T.mode === 'stopwatch') return;
+  if (!hasRemaining()) return;
   const saved = T.stash[stashKey()];
   delete T.stash[stashKey()];
   T.duration = saved ? saved.duration : durationFor();
@@ -241,7 +245,7 @@ function notify(title, body) {
 
 function tick() {
   if (T.running && T.mode !== 'stopwatch' && Date.now() >= T.endAt) completePhase(true);
-  else if (T.running) render();
+  else if (T.running || T.mode === 'clock') render(); // mode Jam: perbarui terus
 }
 
 // ---------------------------------------------------------------- Render
@@ -257,13 +261,20 @@ function fmt(ms) {
 
 function currentLabel() {
   if (T.mode === 'pomodoro') return PHASE_LABEL[T.phase];
+  if (T.mode === 'clock') return new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
   return T.mode === 'countdown' ? 'Countdown' : 'Stopwatch';
 }
 
 function render() {
   let text;
   let fill;
-  if (T.mode === 'stopwatch') {
+  if (T.mode === 'clock') {
+    // Waktu sekarang (24 jam). Ring/bar berputar sekali tiap menit, seperti jarum detik.
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    text = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    fill = (now.getSeconds() * 1000 + now.getMilliseconds()) / 60000;
+  } else if (T.mode === 'stopwatch') {
     const el = elapsedNow();
     text = fmt(el);
     fill = (el % 60000) / 60000;
@@ -275,7 +286,9 @@ function render() {
   const label = currentLabel();
   Clock.render({ text, fill, label });
 
-  document.title = T.running || !isFresh() ? `${text} · ${label}` : 'Study Timer';
+  if (T.mode === 'clock') document.title = `${text} · Study Timer`;
+  else document.title = T.running || !isFresh() ? `${text} · ${label}` : 'Study Timer';
+  $('#clock-date').textContent = T.mode === 'clock' ? label : '';
 
   // tombol mulai
   let startText = 'Mulai';
@@ -287,7 +300,7 @@ function render() {
   $('#btn-start').classList.toggle('is-running', T.running);
 
   const task = T.mode === 'pomodoro' && Tasks.active();
-  MiniTimer.update({ text, fill, label, task: task ? task.title : '', running: T.running, startText, canSkip: T.mode === 'pomodoro' });
+  MiniTimer.update({ text, fill, label, task: task ? task.title : '', running: T.running, startText, canSkip: T.mode === 'pomodoro', canControl: T.mode !== 'clock' });
 
   renderModeUi();
 }

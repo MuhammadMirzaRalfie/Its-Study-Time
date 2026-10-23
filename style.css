@@ -161,6 +161,20 @@ body[data-mode="pomodoro"] .dots { display: flex; }
 body[data-mode="countdown"] .countdown-setup { display: flex; }
 
 body:not([data-mode="pomodoro"]) #btn-skip { visibility: hidden; }
+/* Mode Jam: hanya menampilkan waktu sekarang, tanpa tombol timer. */
+body[data-mode="clock"] .controls { display: none; }
+.clock-date {
+  display: none;
+  font-size: calc(19px * var(--clock-scale));
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  opacity: 0.88;
+  text-shadow: var(--shadow), 0 1px 12px rgba(0, 0, 0, 0.35);
+}
+body[data-mode="clock"] .clock-date { display: block; }
+/* Ring dan Retro sudah menampilkan tanggal sebagai label. */
+body[data-mode="clock"] .clock--ring ~ .clock-date,
+body[data-mode="clock"] .clock--retro ~ .clock-date { display: none; }
 
 .chips { display: inline-flex; gap: 6px; }
 .chips button {

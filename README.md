@@ -1,6 +1,6 @@
 # It's Study Time ⏱️
 
-Study timer yang enak dilihat. Ada Pomodoro, countdown, dan stopwatch, ditambah wallpaper, musik, suara ambient, daftar tugas, dan statistik belajar. Semuanya jalan di browser, tanpa akun dan tanpa install apa pun selain Python. Kalau mau, bisa juga di-install jadi aplikasi di laptop.
+Study timer yang enak dilihat. Ada Pomodoro, countdown, stopwatch, dan jam, ditambah wallpaper, musik, suara ambient, daftar tugas, dan statistik belajar. Semuanya jalan di browser, tanpa akun dan tanpa install apa pun selain Python. Kalau mau, bisa juga di-install jadi aplikasi di laptop.
 
 ![Tampilan utama Study Timer](docs/screenshots/hero.jpg)
 
@@ -26,7 +26,7 @@ Study timer yang enak dilihat. Ada Pomodoro, countdown, dan stopwatch, ditambah 
 
 ## Fitur
 
-- **3 mode timer**: Pomodoro (fokus, istirahat pendek, istirahat panjang), Countdown, dan Stopwatch. Pindah mode tidak me-reset waktu yang sedang berjalan.
+- **4 mode**: Pomodoro (fokus, istirahat pendek, istirahat panjang), Countdown, Stopwatch, dan Jam (waktu sekarang + tanggal). Pindah mode tidak me-reset waktu yang sedang berjalan.
 - **5 gaya jam**: Digital, Ring, Flip (kartu yang benar-benar membalik), Analog, dan Retro.
 - **Background**: 10 gradient, 8 wallpaper foto, atau gambar/video milikmu sendiri. Bisa ditambah efek hujan, salju, atau kunang-kunang.
 - **Warna bisa diatur**: warna aksen dan warna angka jam dipilih terpisah.
@@ -106,6 +106,7 @@ Pilih mode di bagian atas tengah:
 - **Pomodoro**: siklus fokus dan istirahat. Default-nya fokus 25 menit, istirahat pendek 5 menit, dan istirahat panjang 15 menit setiap 4 sesi. Titik-titik di bawah jam menunjukkan sudah berapa sesi selesai di siklus ini.
 - **Countdown**: hitung mundur biasa. Pilih durasi cepat atau isi sendiri berapa menit.
 - **Stopwatch**: hitung maju.
+- **Jam**: menampilkan waktu sekarang (format 24 jam) dan tanggal, dengan gaya jam pilihanmu. Cocok jadi jam meja, misalnya flip clock + mode fokus.
 
 Lalu tekan **Mulai** (atau `Space`). Tombol ↺ untuk reset, ⏭ untuk lewati sesi.
 
